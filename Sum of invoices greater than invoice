@@ -1,0 +1,26 @@
+WITH wah AS (
+    SELECT (
+	SELECT COALESCE(sum(b.title_amount), 0)
+	FROM financial_receivable_titles AS b
+	WHERE a.id = b.bill_title_id AND b.deleted = 0
+    ) "sum_of_titles",
+	(
+	    SELECT count(b.title_amount)
+	    FROM financial_receivable_titles AS b
+	    WHERE a.id = b.bill_title_id AND b.deleted = 0
+	) "number_of_titles",
+	a.title_amount "invoice_amount",
+	p.name "custumer_name",
+	a.title "invoice",
+	a.bank_title_number "our_number",
+	a.id "invoice_id"
+    FROM financial_receivable_titles AS a
+	     JOIN people AS p ON p.id = a.client_id
+    WHERE a.balance <> 0 AND a.origin = 8 AND a.deleted = 0 AND
+	a.title_amount <> (SELECT sum(b.title_amount)
+			   FROM financial_receivable_titles AS b
+			   WHERE a.id = b.bill_title_id)
+)
+SELECT *
+FROM wah
+WHERE wah.`number_of_titles` = 0;
